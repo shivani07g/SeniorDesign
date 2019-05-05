@@ -74,14 +74,9 @@ void loop() {
   // TRANSITIONS: Servo Motors
   if ((sonar.ping_result / US_ROUNDTRIP_CM >= 4) && (sonar.ping_result / US_ROUNDTRIP_CM < 10)) { // start sliding door
     Serial.println("Transition:");
-    for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
-      pwm.setPWM(0, 0, pulselen);
-    }
-    delay(500);
-    for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
-      pwm.setPWM(0, 0, pulselen);
-    }
-    delay(500);
+    servoRetract(0);
+    delay(2000);
+    servoAdvance(0);
   }
 
   // WAITING RACK: Stepper Motor
@@ -116,6 +111,20 @@ void WR_test_onerotation() {
     delayMicroseconds(1000);
   }
   delay(1000); // One second delay
+}
+
+void servoRetract(uint8_t servoNum){
+    for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
+      pwm.setPWM(servoNum, 0, pulselen);
+    }
+    delay(500);  
+}
+
+void servoAdvance(uint8_t servoNum){
+    for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
+      pwm.setPWM(servoNum, 0, pulselen);
+    }
+    delay(500);
 }
 
 // e.g. setServoPulse(0, 0.001) is a ~1 millisecond pulse width. its not precise!

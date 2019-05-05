@@ -1,13 +1,15 @@
 /*  Code for BME 371 Senior Design
     Team 18:
     Shivani Gupta, Redon Kallashi, Hannah Wang, Enoch Wong, Le Hoang
-    Adapted from and Modified: 
+    Adapted from and Modified:
     - Simple Stepper Motor Control Example Code, by Dejan Nedelkovski
     - Utilized NewPing Library
 */
 
 // Library Includes
+#include <Wire.h>
 #include <NewPing.h>
+#include <Adafruit_PWMServoDriver.h>
 
 // ************ Initialization ************
 // INSERTION: Ultrasonic Sensor
@@ -15,6 +17,21 @@
 #define TRIGGER_PIN   12 // Arduino pin tied to trigger pin on ping sensor.
 #define ECHO_PIN      11 // Arduino pin tied to echo pin on ping sensor.
 #define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters)
+
+// TRANSITIONS: Servo Motors
+
+// called this way, it uses the default address 0x40
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+
+// Depending on your servo make, the pulse width min and max may vary, you
+// want these to be as small/large as possible without hitting the hard stop
+// for max range. You'll have to tweak them as necessary to match the servos you
+// have!
+#define SERVOMIN  150 // this is the 'minimum' pulse length count (out of 4096)
+#define SERVOMAX  600 // this is the 'maximum' pulse length count (out of 4096)
+
+// our servo # counter
+uint8_t servonum = 0;
 
 // WAITING RACK: defines pins numbers
 const int stepPin = 3;
@@ -34,7 +51,11 @@ void setup() {
   // INSERTION: Ultrasonic Sensor
   pingTimer = millis(); // Start now.
 
-  // TRANSTITIONS: Servo Motors
+  // TRANSITIONS: Servo Motors
+  Serial.println("Servo test!");
+  pwm.begin();
+  pwm.setPWMFreq(60);  // Analog servos run at ~60 Hz updates
+  delay(10);
 
   // WAITING RACK: Stepper Motor
   pinMode(stepPin, OUTPUT);
@@ -50,11 +71,19 @@ void loop() {
     sonar.ping_timer(echoCheck); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
   }
 
-  // TRANSTITIONS: Servo Motors
+  // TRANSITIONS: Servo Motors
   if ((sonar.ping_result / US_ROUNDTRIP_CM >= 4) && (sonar.ping_result / US_ROUNDTRIP_CM < 10)) { // start sliding door
     Serial.println("Transition:");
+    for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
+      pwm.setPWM(0, 0, pulselen);
+    }
+    delay(500);
+    for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
+      pwm.setPWM(0, 0, pulselen);
+    }
+    delay(500);
   }
-  
+
   // WAITING RACK: Stepper Motor
   if ((sonar.ping_result / US_ROUNDTRIP_CM >= 4) && (sonar.ping_result / US_ROUNDTRIP_CM < 10)) { // start one rotation of waiting rack
     // Start the timer:
@@ -80,11 +109,26 @@ void echoCheck() { // Timer2 interrupt calls this function every 24uS where you 
 void WR_test_onerotation() {
   digitalWrite(dirPin, HIGH); // Enables the motor to move in a particular direction
   // Makes 200 pulses for making one full cycle rotation
-  for (int x = 0; x < 200; x++) {
+  for (int x = 0; x < 2000; x++) {
     digitalWrite(stepPin, HIGH);
     delayMicroseconds(1000);
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(500);
+    delayMicroseconds(1000);
   }
   delay(1000); // One second delay
+}
+
+// e.g. setServoPulse(0, 0.001) is a ~1 millisecond pulse width. its not precise!
+void setServoPulse(uint8_t n, double pulse) {
+  double pulselength;
+
+  pulselength = 1000000;   // 1,000,000 us per second
+  pulselength /= 60;   // 60 Hz
+  Serial.print(pulselength); Serial.println(" us per period");
+  pulselength /= 4096;  // 12 bits of resolution
+  Serial.print(pulselength); Serial.println(" us per bit");
+  pulse *= 1000000;  // convert to us
+  pulse /= pulselength;
+  Serial.println(pulse);
+  pwm.setPWM(n, 0, pulse);
 }

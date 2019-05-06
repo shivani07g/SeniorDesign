@@ -71,6 +71,7 @@ void loop() {
     sonar.ping_timer(echoCheck); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
   }
 
+/*
   // TRANSITIONS: Servo Motors
   if ((sonar.ping_result / US_ROUNDTRIP_CM >= 4) && (sonar.ping_result / US_ROUNDTRIP_CM < 10)) { // start sliding door
     // Y-TUBE: Start
@@ -85,18 +86,19 @@ void loop() {
     delay(2000);
     servoAdvance(1);
     delay(2000);
-
+*/
     // WAITING RACK: Stepper Motor
     // Start the timer:
     // Move Waiting Rack:
     Serial.println("Spinning:");
     WR_test_onerotation();
-
+/*
     // TO CENTRIFUGE: Start
     servoRetract(2);
     delay(2000);
     servoAdvance(2);
     delay(2000);
+    */
     
   }
 

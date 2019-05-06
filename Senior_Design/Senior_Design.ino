@@ -28,7 +28,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // for max range. You'll have to tweak them as necessary to match the servos you
 // have!
 #define SERVOMIN  150 // this is the 'minimum' pulse length count (out of 4096)
-#define SERVOMAX  600 // this is the 'maximum' pulse length count (out of 4096)
+#define SERVOMAX  500 // this is the 'maximum' pulse length count (out of 4096)
 
 // our servo # counter
 uint8_t servonum = 0;
@@ -56,6 +56,8 @@ void setup() {
   pwm.begin();
   pwm.setPWMFreq(60);  // Analog servos run at ~60 Hz updates
   delay(10);
+  //  servoAdvance(1);
+  //  servoAdvance(2);
 
   // WAITING RACK: Stepper Motor
   pinMode(stepPin, OUTPUT);
@@ -71,38 +73,46 @@ void loop() {
     sonar.ping_timer(echoCheck); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
   }
 
-/*
+
   // TRANSITIONS: Servo Motors
-  if ((sonar.ping_result / US_ROUNDTRIP_CM >= 4) && (sonar.ping_result / US_ROUNDTRIP_CM < 10)) { // start sliding door
+  if ((sonar.ping_result / US_ROUNDTRIP_CM >= 5) && (sonar.ping_result / US_ROUNDTRIP_CM < 10)) { // start sliding door
     // Y-TUBE: Start
-    Serial.println("Transition:");
+    Serial.println("Y-Tube:");
     servoRetract(0);
-    delay(2000);
+    delay(1000);
     servoAdvance(0);
-    delay(2000);
+    delay(1000);
+    pwm.setPWM(0, 0, 0);
 
     // HOLDER: Start
+    Serial.println("Holder:");
     servoRetract(1);
-    delay(2000);
+    delay(1000);
     servoAdvance(1);
-    delay(2000);
-*/
+    delay(1000);
+    servoRetract(1);
+    delay(1000);
+    pwm.setPWM(1, 0, 0);
+
     // WAITING RACK: Stepper Motor
     // Start the timer:
     // Move Waiting Rack:
     Serial.println("Spinning:");
     WR_test_onerotation();
-/*
-    // TO CENTRIFUGE: Start
-    servoRetract(2);
-    delay(2000);
-    servoAdvance(2);
-    delay(2000);
-    */
-    
-  }
+    delay(10000);
 
-}
+    // TO CENTRIFUGE: Start
+    Serial.println("To Centrifuge:");
+    servoAdvance(2);
+    delay(1000);
+    servoRetract(2);
+    delay(1000);
+    pwm.setPWM(2, 0, 0);
+
+    sonar.ping_result = 1;
+  }
+  //  delay(30000);
+} // Loop ends here
 
 
 // ************ Private Helper Functions ************
@@ -124,7 +134,7 @@ void echoCheck() { // Timer2 interrupt calls this function every 24uS where you 
 void WR_test_onerotation() {
   digitalWrite(dirPin, HIGH); // Enables the motor to move in a particular direction
   // Makes 200 pulses for making one full cycle rotation
-  for (int x = 0; x < 2000; x++) {
+  for (int x = 0; x < 500; x++) {
     digitalWrite(stepPin, HIGH);
     delayMicroseconds(1000);
     digitalWrite(stepPin, LOW);
@@ -134,14 +144,22 @@ void WR_test_onerotation() {
 }
 
 void servoRetract(uint8_t servoNum) {
-  for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
+  int max = SERVOMAX;
+  if(servoNum == 2) {
+    max = 600; 
+  }
+  for (uint16_t pulselen = SERVOMIN; pulselen < max; pulselen++) {
     pwm.setPWM(servoNum, 0, pulselen);
   }
   delay(500);
 }
 
 void servoAdvance(uint8_t servoNum) {
-  for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
+  int max = SERVOMAX;
+  if(servoNum == 2) {
+    max = 600; 
+  }
+  for (uint16_t pulselen = max; pulselen > SERVOMIN; pulselen--) {
     pwm.setPWM(servoNum, 0, pulselen);
   }
   delay(500);

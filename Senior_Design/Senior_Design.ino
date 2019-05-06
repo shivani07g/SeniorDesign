@@ -73,20 +73,35 @@ void loop() {
 
   // TRANSITIONS: Servo Motors
   if ((sonar.ping_result / US_ROUNDTRIP_CM >= 4) && (sonar.ping_result / US_ROUNDTRIP_CM < 10)) { // start sliding door
+    // Y-TUBE: Start
     Serial.println("Transition:");
     servoRetract(0);
     delay(2000);
     servoAdvance(0);
-  }
+    delay(2000);
 
-  // WAITING RACK: Stepper Motor
-  if ((sonar.ping_result / US_ROUNDTRIP_CM >= 4) && (sonar.ping_result / US_ROUNDTRIP_CM < 10)) { // start one rotation of waiting rack
+    // HOLDER: Start
+    servoRetract(1);
+    delay(2000);
+    servoAdvance(1);
+    delay(2000);
+
+    // WAITING RACK: Stepper Motor
     // Start the timer:
     // Move Waiting Rack:
     Serial.println("Spinning:");
     WR_test_onerotation();
+
+    // TO CENTRIFUGE: Start
+    servoRetract(2);
+    delay(2000);
+    servoAdvance(2);
+    delay(2000);
+    
   }
+
 }
+
 
 // ************ Private Helper Functions ************
 
@@ -101,6 +116,9 @@ void echoCheck() { // Timer2 interrupt calls this function every 24uS where you 
   // Don't do anything here!
 }
 
+// delay to receive tube
+// move to next step: add ten second delay timer
+// move to the final position
 void WR_test_onerotation() {
   digitalWrite(dirPin, HIGH); // Enables the motor to move in a particular direction
   // Makes 200 pulses for making one full cycle rotation
@@ -113,18 +131,18 @@ void WR_test_onerotation() {
   delay(1000); // One second delay
 }
 
-void servoRetract(uint8_t servoNum){
-    for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
-      pwm.setPWM(servoNum, 0, pulselen);
-    }
-    delay(500);  
+void servoRetract(uint8_t servoNum) {
+  for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
+    pwm.setPWM(servoNum, 0, pulselen);
+  }
+  delay(500);
 }
 
-void servoAdvance(uint8_t servoNum){
-    for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
-      pwm.setPWM(servoNum, 0, pulselen);
-    }
-    delay(500);
+void servoAdvance(uint8_t servoNum) {
+  for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
+    pwm.setPWM(servoNum, 0, pulselen);
+  }
+  delay(500);
 }
 
 // e.g. setServoPulse(0, 0.001) is a ~1 millisecond pulse width. its not precise!

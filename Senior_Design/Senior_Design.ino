@@ -33,6 +33,8 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // our servo # counter
 uint8_t servonum = 0;
 
+int x = 0;
+
 // WAITING RACK: defines pins numbers
 const int stepPin = 3;
 const int dirPin = 4;
@@ -46,13 +48,18 @@ NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and
 // ************ Set Up ************
 void setup() {
   // Set up the serial monitor:
-  Serial.begin(115200); // Open serial monitor at 115200 baud to see ping results.
+  //  Serial.begin(115200); // Open serial monitor at 115200 baud to see ping results.
+
+  // Start the I2C Bus as Slave on address 9
+  Wire.begin(9);
+  // Attach a function to trigger when something is received.
+  Wire.onReceive(receiveEvent);
 
   // INSERTION: Ultrasonic Sensor
   pingTimer = millis(); // Start now.
 
   // TRANSITIONS: Servo Motors
-  Serial.println("Servo test!");
+  //  Serial.println("Servo test!");
   pwm.begin();
   pwm.setPWMFreq(60);  // Analog servos run at ~60 Hz updates
   delay(10);
@@ -64,6 +71,10 @@ void setup() {
   pinMode(dirPin, OUTPUT);
 }
 
+void receiveEvent(int bytes) {
+  x = Wire.read();    // read one character from the I2C
+}
+
 // ************ Loop ************
 void loop() {
   // INSERTION: Ultrasonic Sensor
@@ -73,45 +84,72 @@ void loop() {
     sonar.ping_timer(echoCheck); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
   }
 
-
-  // TRANSITIONS: Servo Motors
-  if ((sonar.ping_result / US_ROUNDTRIP_CM >= 5) && (sonar.ping_result / US_ROUNDTRIP_CM < 10)) { // start sliding door
-  /*
+  //If value received is 0 blink LED for 200 ms
+  if (x == '1') { // Lav
     // Y-TUBE: Start
-    Serial.println("Y-Tube:");
+    //    Serial.println("Y-Tube:");
     servoRetract(0);
     delay(1000);
     servoAdvance(0);
     delay(1000);
     pwm.setPWM(0, 0, 0);
+  }
+  //If value received is 3 blink LED for 400 ms
+  if (x == '2') { // Gold
+    // TRANSITIONS: Servo Motors
+    if ((sonar.ping_result / US_ROUNDTRIP_CM >= 6) && (sonar.ping_result / US_ROUNDTRIP_CM < 10)) { // start sliding door
 
-    // HOLDER: Start
-    Serial.println("Holder:");
-    servoRetract(1);
-    delay(1000);
-    servoAdvance(1);
-    delay(1000);
-    servoRetract(1);
-    delay(1000);
-    pwm.setPWM(1, 0, 0);
-*/
-    // WAITING RACK: Stepper Motor
-    // Start the timer:
-    // Move Waiting Rack:
-    Serial.println("Spinning:");
-    WR_test_onerotation();
-    delay(100);
+      // Y-TUBE: Start
+      //    Serial.println("Y-Tube:");
+      servoRetract(0);
+      delay(1000);
+      servoAdvance(0);
+      delay(1000);
+      pwm.setPWM(0, 0, 0);
 
-/*
-    // TO CENTRIFUGE: Start
-    Serial.println("To Centrifuge:");
-    servoAdvance(2);
-    delay(1000);
-    servoRetract(2);
-    delay(1000);
-    pwm.setPWM(2, 0, 0);
-*/
-    sonar.ping_result = 1;
+      // HOLDER: Start
+      //    Serial.println("Holder:");
+      servoRetract(1);
+      delay(1000);
+      servoAdvance(1);
+      delay(1000);
+      servoRetract(1);
+      delay(1000);
+      pwm.setPWM(1, 0, 0);
+      // WAITING RACK: Stepper Motor
+      // Start the timer:
+      // Move Waiting Rack:
+      //    Serial.println("Spinning:");
+      WR_test_onerotation();
+      delay(100);
+
+      // TO CENTRIFUGE: Start
+      //    Serial.println("To Centrifuge:");
+      servoAdvance(2);
+      delay(1000);
+      servoRetract(2);
+      delay(1000);
+      pwm.setPWM(2, 0, 0);
+
+      for (int x = 0; x < 6; x++) {
+        digitalWrite(stepPin, HIGH);
+        delayMicroseconds(5000);
+        digitalWrite(stepPin, LOW);
+        delayMicroseconds(5000);
+      }
+
+      //  AFTER CENTRIFUGE: Start
+      //  Serial.println("END:");
+      servoRetract(4);
+      delay(1000);
+      servoAdvance(4);
+      delay(1000);
+      servoRetract(4);
+      delay(1000);
+      pwm.setPWM(4, 0, 0);
+
+      sonar.ping_result = 1;
+    }
   }
   //  delay(30000);
 } // Loop ends here
@@ -123,9 +161,9 @@ void echoCheck() { // Timer2 interrupt calls this function every 24uS where you 
   // Don't do anything here!
   if (sonar.check_timer()) { // This is how you check to see if the ping was received.
     // Here's where you can add code.
-    Serial.print("Ping: ");
-    Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
-    Serial.println("cm");
+    //    Serial.print("Ping: ");
+    //    Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
+    //    Serial.println("cm");
   }
   // Don't do anything here!
 }
@@ -143,18 +181,13 @@ void WR_test_onerotation() {
     delayMicroseconds(5000);
   }
   delay(3000); // One second delay
-    for (int x = 0; x < 7.5; x++) {
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(5000);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(5000);
-  }
+
 }
 
 void servoRetract(uint8_t servoNum) {
   int max = SERVOMAX;
-  if(servoNum == 2) {
-    max = 600; 
+  if (servoNum == 2) {
+    max = 600;
   }
   for (uint16_t pulselen = SERVOMIN; pulselen < max; pulselen++) {
     pwm.setPWM(servoNum, 0, pulselen);
@@ -164,8 +197,8 @@ void servoRetract(uint8_t servoNum) {
 
 void servoAdvance(uint8_t servoNum) {
   int max = SERVOMAX;
-  if(servoNum == 2) {
-    max = 600; 
+  if (servoNum == 2) {
+    max = 600;
   }
   for (uint16_t pulselen = max; pulselen > SERVOMIN; pulselen--) {
     pwm.setPWM(servoNum, 0, pulselen);

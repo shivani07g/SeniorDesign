@@ -20,21 +20,11 @@ void receiveEvent(int bytes) {
 void loop() {
     Serial.println(x);
   //If value received is 0 blink LED for 200 ms
-  if (x == '0') {
-    digitalWrite(LED, HIGH);
-    Serial.print("Slave: ");
-    Serial.println(x);
-    delay(200);
-    digitalWrite(LED, LOW);
-    delay(200);
+  if (x == '1') {
+
   }
   //If value received is 3 blink LED for 400 ms
-  if (x == '3') {
-    digitalWrite(LED, HIGH);
-    Serial.print("Slave: ");
-    Serial.println(x);
-    delay(400);
-    digitalWrite(LED, LOW);
-    delay(400);
+  if (x == '2') {
+
   }
 }

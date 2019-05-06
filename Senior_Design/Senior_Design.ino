@@ -76,6 +76,7 @@ void loop() {
 
   // TRANSITIONS: Servo Motors
   if ((sonar.ping_result / US_ROUNDTRIP_CM >= 5) && (sonar.ping_result / US_ROUNDTRIP_CM < 10)) { // start sliding door
+  /*
     // Y-TUBE: Start
     Serial.println("Y-Tube:");
     servoRetract(0);
@@ -93,14 +94,15 @@ void loop() {
     servoRetract(1);
     delay(1000);
     pwm.setPWM(1, 0, 0);
-
+*/
     // WAITING RACK: Stepper Motor
     // Start the timer:
     // Move Waiting Rack:
     Serial.println("Spinning:");
     WR_test_onerotation();
-    delay(10000);
+    delay(100);
 
+/*
     // TO CENTRIFUGE: Start
     Serial.println("To Centrifuge:");
     servoAdvance(2);
@@ -108,7 +110,7 @@ void loop() {
     servoRetract(2);
     delay(1000);
     pwm.setPWM(2, 0, 0);
-
+*/
     sonar.ping_result = 1;
   }
   //  delay(30000);
@@ -134,13 +136,19 @@ void echoCheck() { // Timer2 interrupt calls this function every 24uS where you 
 void WR_test_onerotation() {
   digitalWrite(dirPin, HIGH); // Enables the motor to move in a particular direction
   // Makes 200 pulses for making one full cycle rotation
-  for (int x = 0; x < 500; x++) {
+  for (int x = 0; x < 92.5; x++) {
     digitalWrite(stepPin, HIGH);
-    delayMicroseconds(1000);
+    delayMicroseconds(5000);
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(1000);
+    delayMicroseconds(5000);
   }
-  delay(1000); // One second delay
+  delay(3000); // One second delay
+    for (int x = 0; x < 7.5; x++) {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(5000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(5000);
+  }
 }
 
 void servoRetract(uint8_t servoNum) {
